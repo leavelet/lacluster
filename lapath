@@ -39,6 +39,9 @@ check_and_create_folders() {
     if [ ! -d $HOME/qemu/monitor ]; then
         mkdir $HOME/qemu/monitor
     fi
+    if [ ! -d $HOME/qemu/bios ]; then
+        mkdir $HOME/qemu/bios
+    fi
 }
 
 create_tmux_session_if_not_exists() {
