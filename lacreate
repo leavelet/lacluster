@@ -66,7 +66,7 @@ echo "Creating VM $1, profile is $3"
 read_profile $3
 create_tmux_session_if_not_exists $name
 echo "Command is module load qemu && $QEMU_BIN -m $MEM -cpu $CPU -machine $MACHINE -smp $SMP -bios $BIOS_DIR/$BIOS -nographic -device virtio-net,netdev=net0 -netdev user,id=net0,hostfwd=tcp::$port-:22 -hda $CHANGE_IMAGE_DIR/$change.qcow2 -name $1 -monitor unix:$MONITOR_DIR/$1,server,nowait"
-tmux send-keys "module load qemu && $QEMU_BIN -m $MEM -cpu $CPU -machine $MACHINE -smp $SMP -bios $BIOS_DIR/$BIOS -nographic -device virtio-net,netdev=net0 -netdev user,id=net0,hostfwd=tcp::$port-:22 -hda $CHANGE_IMAGE_DIR/$change.qcow2 -name $1 -monitor unix:$MONITOR_DIR/$1,server,nowait" C-m
+tmux send-keys -t $name "module load qemu && $QEMU_BIN -m $MEM -cpu $CPU -machine $MACHINE -smp $SMP -bios $BIOS_DIR/$BIOS -nographic -device virtio-net,netdev=net0 -netdev user,id=net0,hostfwd=tcp::$port-:22 -hda $CHANGE_IMAGE_DIR/$change.qcow2 -name $1 -monitor unix:$MONITOR_DIR/$1,server,nowait" C-m 
 
 # ps aux to get whether the vm is running
 # if yes, then add to state file
