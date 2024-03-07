@@ -1,0 +1,6 @@
+QEMU_BIN=qemu-system-loongarch64
+MEM=16G
+CPU=la464-loongarch-cpu
+MACHINE=virt
+SMP=4
+BIOS=loongarch-qemu-uefi.fd

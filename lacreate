@@ -1,0 +1,84 @@
+#!/usr/bin/bash
+
+# usage: lacreate name base profile [change]
+
+source lapath
+source laprofile
+
+# if lock file exists, exit
+if [ -f $LOCK_FILE ]; then
+    echo "Lock file exists, exiting"
+    exit 1
+fi
+
+# create lock file
+touch $LOCK_FILE
+
+# check whether the base image exists
+if [ ! -f $BASE_IMAGE_DIR/$2 ]; then
+    echo "Base image $2 does not exist, exiting"
+    rm $LOCK_FILE
+    exit 1
+fi
+
+# check whether the profile exists
+if [ ! -f $PROFILE_DIR/$3 ]; then
+    echo "Profile $3 does not exist, exiting"
+    rm $LOCK_FILE
+    exit 1
+fi
+
+# check if name already exists
+if [ -f $STATE_FILE ]; then
+    if cat $STATE_FILE | grep $1 > /dev/null; then
+        echo "VM $1 already exists, exiting"
+        rm $LOCK_FILE
+        exit 1
+    fi
+fi
+
+# if change image is not provided, create a new one
+if [ -z $4 ]; then
+    change=$(uuidgen)
+    qemu-img create -f qcow2 -F qcow2 \
+        -o backing_file=$BASE_IMAGE_DIR/$2 \
+        $CHANGE_IMAGE_DIR/$change.qcow2 200G
+    if [ $? -ne 0 ]; then
+        echo "Error creating change image, exiting"
+        rm $LOCK_FILE
+        exit 1
+    fi
+else
+    change=$4
+    if [ ! -f $CHANGE_IMAGE_DIR/$change ]; then
+        echo "Change image $change does not exist, exiting"
+        rm $LOCK_FILE
+        exit 1
+    fi
+fi
+
+# get a free port from stdout of lagetport
+port=$(comm -23 <(seq "10000" "50000") <(ss -tan | awk '{print $4}' | cut -d':' -f2 | grep '[0-9]\{1,5\}' | sort -n | uniq) | shuf | head -n 1)
+echo "Port is $port"
+
+# create a new vm
+echo "Creating VM $1, profile is $3"
+read_profile $3
+create_tmux_session_if_not_exists $name
+echo "Command is module load qemu && $QEMU_BIN -m $MEM -cpu $CPU -machine $MACHINE -smp $SMP -bios $BIOS_DIR/$BIOS -nographic -device virtio-net,netdev=net0 -netdev user,id=net0,hostfwd=tcp::$port-:22 -hda $CHANGE_IMAGE_DIR/$change.qcow2 -name $1 -monitor unix:$MONITOR_DIR/$1,server,nowait"
+tmux send-keys "module load qemu && $QEMU_BIN -m $MEM -cpu $CPU -machine $MACHINE -smp $SMP -bios $BIOS_DIR/$BIOS -nographic -device virtio-net,netdev=net0 -netdev user,id=net0,hostfwd=tcp::$port-:22 -hda $CHANGE_IMAGE_DIR/$change.qcow2 -name $1 -monitor unix:$MONITOR_DIR/$1,server,nowait" C-m
+
+# ps aux to get whether the vm is running
+# if yes, then add to state file
+# if no, then remove the tmux session
+ps aux | grep $1 | grep -v grep > /dev/null
+if [ $? -eq 0 ]; then
+    echo "VM $1 is running"
+    echo "$1 $2 $change on $port $3" >> $STATE_FILE
+else
+    echo "VM $1 is not running"
+    tmux kill-session -t $1
+fi
+
+# remove lock file
+rm $LOCK_FILE

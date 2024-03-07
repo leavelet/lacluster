@@ -1,0 +1,50 @@
+#!/usr/bin/bash
+
+STATE_FILE=$HOME/qemu/state/list
+LOCK_FILE=$HOME/qemu/state/lock
+PROFILE_DIR=$HOME/qemu/profiles
+BASE_IMAGE_DIR=$HOME/qemu/images/base
+CHANGE_IMAGE_DIR=$HOME/qemu/images/change
+MONITOR_DIR=$HOME/qemu/monitor
+BIOS_DIR=$HOME/qemu/bios
+
+read_state() {
+    name=$(echo $1 | awk '{print $1}')
+    base=$(echo $1 | awk '{print $2}')
+    change=$(echo $1 | awk '{print $3}')
+    state=$(echo $1 | awk '{print $4}')
+    port=$(echo $1 | awk '{print $5}')
+    profile=$(echo $1 | awk '{print $6}')
+}
+
+check_and_create_folders() {
+    if [ ! -d $HOME/qemu ]; then
+        mkdir $HOME/qemu
+    fi
+    if [ ! -d $HOME/qemu/state ]; then
+        mkdir $HOME/qemu/state
+    fi
+    if [ ! -d $HOME/qemu/profiles ]; then
+        mkdir $HOME/qemu/profiles
+    fi
+    if [ ! -d $HOME/qemu/images ]; then
+        mkdir $HOME/qemu/images
+    fi
+    if [ ! -d $HOME/qemu/images/base ]; then
+        mkdir $HOME/qemu/images/base
+    fi
+    if [ ! -d $HOME/qemu/images/change ]; then
+        mkdir $HOME/qemu/images/change
+    fi
+    if [ ! -d $HOME/qemu/monitor ]; then
+        mkdir $HOME/qemu/monitor
+    fi
+}
+
+create_tmux_session_if_not_exists() {
+    if [ -z "$(tmux list-sessions | grep $1)" ]; then
+        tmux new -d -s $1
+    fi
+}
+
+check_and_create_folders

@@ -1,0 +1,26 @@
+#!/usr/bin/bash
+
+source lapath
+
+# if lock file exists, exit
+if [ -f $LOCK_FILE ]; then
+    echo "Lock file exists, exiting"
+    exit 1
+fi
+
+# create lock file
+touch $LOCK_FILE
+
+# read state file
+# line format:
+# <vm name> <disk image: base> <disk image: change> <state> <ssh port> <vm profile>
+printf "%-36s | %-44s | %-36s | %-10s | %-10s | %-10s\n" "Name" "Base" "Change" "State" "Port" "Profile"
+printf "%-36s-|-%-44s-|-%-36s-|-%-10s-|-%-10s | %-10s\n" "------------------------------------" "--------------------------------------------" "------------------------------------" "----------" "----------" "----------"
+while read line; do
+    read_state "$line"
+    printf "%-36s | %-44s | %-36s | %-10s | %-10s | %-10s\n" $name $base $change $state $port $profile
+done < $STATE_FILE
+
+# remove lock file
+rm $LOCK_FILE
+

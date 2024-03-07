@@ -1,0 +1,50 @@
+#!/usr/bin/bash
+
+# usage:
+#       lapower name-key-word state
+# where:
+#       name: name of the vm
+#       state: state of the vm (on, off)
+
+source lapath
+source laprofile
+
+# if lock file exists, exit
+if [ -f $LOCK_FILE ]; then
+    echo "Lock file exists, exiting"
+    exit 1
+fi
+
+# create lock file
+touch $LOCK_FILE
+
+# for each line, check whether name contains the keyword
+# if yes, then power on/off the vm
+while read line; do
+    read_state "$line"
+    if [[ $name == *$1* ]]; then
+        read_profile $profile
+        source /usr/share/Modules/init/bash
+        module load qemu
+        if [ $state == $2 ]; then
+            echo "VM $name is already $2"
+        else
+            if [ $2 == "on" ]; then
+                echo "Powering on VM $name, profile is $profile"
+                create_tmux_session_if_not_exists $name
+                echo "Command is module load qemu && $QEMU_BIN -m $MEM -cpu $CPU -machine $MACHINE -smp $SMP -bios $BIOS_DIR/$BIOS -nographic -device virtio-net,netdev=net0 -netdev user,id=net0,hostfwd=tcp::$port-:22 -hda $CHANGE_IMAGE_DIR/$change.qcow2 -name $1 -monitor unix:$MONITOR_DIR/$1,server,nowait"
+                tmux send-keys "module load qemu && $QEMU_BIN -m $MEM -cpu $CPU -machine $MACHINE -smp $SMP -bios $BIOS_DIR/$BIOS -nographic -device virtio-net,netdev=net0 -netdev user,id=net0,hostfwd=tcp::$port-:22 -hda $CHANGE_IMAGE_DIR/$change.qcow2 -name $1 -monitor unix:$MONITOR_DIR/$1,server,nowait" C-m
+                # change state in state file
+                sed -i "s/$name $base $change $state $port $profile/$name $base $change on $port $profile/g" $STATE_FILE
+            else
+                echo "Powering off VM $name"
+                tmux kill-session -t $name 
+                # change state in state file
+                sed -i "s/$name $base $change $state $port $profile/$name $base $change off $port $profile/g" $STATE_FILE
+            fi
+        fi
+    fi
+done < $STATE_FILE
+
+# remove lock file
+rm $LOCK_FILE

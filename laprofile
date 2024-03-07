@@ -1,0 +1,25 @@
+#!/usr/bin/bash
+
+source lapath
+
+get_profile() {
+    profile=$(cat $STATE_FILE | grep $1 | awk '{print $6}')
+}
+
+read_profile() {
+    # read profile file lines, each of aaa=bbb format
+    profile_file=$PROFILE_DIR/$1
+    while read line; do
+        # assign value to key environment variable
+        export $line
+    done < $profile_file
+}
+
+list_profile() {
+    # if with $1, show only the profile with the name $2
+    if [ -z $1 ]; then
+        ls $PROFILE_DIR
+    else
+        cat $PROFILE_DIR/$1
+    fi
+}
