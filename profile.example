@@ -4,3 +4,4 @@ CPU=la464-loongarch-cpu
 MACHINE=virt
 SMP=4
 BIOS=loongarch-qemu-uefi.fd
+LAUSERNAME=loongarch

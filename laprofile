@@ -8,6 +8,7 @@ get_profile() {
 
 read_profile() {
     # read profile file lines, each of aaa=bbb format
+    echo $1
     profile_file=$PROFILE_DIR/$1
     while read line; do
         # assign value to key environment variable

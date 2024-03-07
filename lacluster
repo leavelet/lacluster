@@ -1,11 +1,53 @@
 #!/usr/bin/bash
 
-# usage: lacluster profile base number
+# usage: lacluster create profile base number
+#        lacluster ls base
+#        lacluster ls change
+#        lacluster ls profile
 
 source lapath
 source laprofile
 
-# create number of vms using the profile
-for i in $(seq 1 $3); do
-    lacreate $(uuidgen) $2 $1
-done
+list_base_images() {
+    ls $BASE_IMAGE_DIR
+}
+
+list_change_images() {
+    ls $CHANGE_IMAGE_DIR
+}
+list_profiles() {
+    ls $PROFILE_DIR
+}
+
+create_machines() {
+    # create number of vms using the profile
+    echo $1 $2 $3 $4
+    for i in $(seq 1 $4); do
+        lacreate $(uuidgen) $1 $1
+    done
+}
+
+case $1 in
+    create)
+        create_machines $2 $3 $4
+        ;;
+    ls)
+        case $2 in
+            base)
+                list_base_images
+                ;;
+            change)
+                list_change_images
+                ;;
+            profile)
+                list_profiles
+                ;;
+        esac
+        ;;
+    *)
+        echo "Usage: lacluster create profile base number"
+        echo "       lacluster ls base"
+        echo "       lacluster ls change"
+        echo "       lacluster ls profile"
+        ;;
+esac

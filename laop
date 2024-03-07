@@ -1,0 +1,20 @@
+#!/usr/bin/bash
+
+# usage: laop ssh name
+
+source lapath
+source laprofile
+
+la_getport() {
+    cat $STATE_FILE | grep $1 | awk '{print $5}'
+}
+
+case $1 in
+    ssh)
+        read_profile $(cat $STATE_FILE | grep $2 | awk '{print $6}')
+        ssh -p $(la_getport $2) $LAUSERNAME@127.0.0.1
+        ;;
+    *)
+        echo "Usage: laop ssh name"
+        ;;
+esac

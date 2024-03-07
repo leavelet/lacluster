@@ -46,6 +46,7 @@ check_and_create_folders() {
 
 create_tmux_session_if_not_exists() {
     if [ -z "$(tmux list-sessions | grep $1)" ]; then
+        echo "Creating tmux session $1"
         tmux new -d -s $1
     fi
 }
